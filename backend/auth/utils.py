@@ -128,7 +128,20 @@ def get_gmail_service(user_email=None):
                 info = json.loads(token_data)
             else:
                 info = token_data
-            creds = Credentials.from_authorized_user_info(info, SCOPES)
+            
+            # Check if we have the full 'Authorized User' format
+            if all(k in info for k in ["client_id", "client_secret", "refresh_token"]):
+                creds = Credentials.from_authorized_user_info(info, SCOPES)
+            else:
+                # Fallback: Just use the access_token (Common for Flutter tokens)
+                # Note: This token will expire in 1 hour and cannot be refreshed
+                # unless a refresh_token was also saved.
+                creds = Credentials(
+                    token=info.get("access_token") or info.get("token"),
+                    refresh_token=info.get("refresh_token"),
+                    token_uri="https://oauth2.googleapis.com/token",
+                    scopes=SCOPES
+                )
         except Exception as e:
             print(f"Error parsing token for {user_email}: {e}")
             return None
