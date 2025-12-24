@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# Google OAuth & App Data (CRITICAL: DO NOT REMOVE)
+token.json
+tokens/
+client_secret.json
+history.json
+extracted_links.json
+processed_messages.json
+
+# VS Code
+.vscode/
