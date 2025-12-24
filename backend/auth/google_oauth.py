@@ -27,11 +27,23 @@ def trigger_sync(request: Request):
 
 @router.get("/auth/google/login")
 def google_login():
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=SCOPES + ["https://www.googleapis.com/auth/userinfo.email", "openid"],
-        redirect_uri=REDIRECT_URI,
-    )
+    # 1. Try to load from file
+    if os.path.exists(CLIENT_SECRETS_FILE):
+        flow = Flow.from_client_secrets_file(
+            CLIENT_SECRETS_FILE,
+            scopes=SCOPES + ["https://www.googleapis.com/auth/userinfo.email", "openid"],
+            redirect_uri=REDIRECT_URI,
+        )
+    # 2. Try to load from Environment Variable
+    elif os.getenv("GOOGLE_CLIENT_SECRETS"):
+        client_config = json.loads(os.getenv("GOOGLE_CLIENT_SECRETS"))
+        flow = Flow.from_client_config(
+            client_config,
+            scopes=SCOPES + ["https://www.googleapis.com/auth/userinfo.email", "openid"],
+            redirect_uri=REDIRECT_URI,
+        )
+    else:
+        return JSONResponse(status_code=500, content={"error": "Google Client Secrets not configured"})
 
     authorization_url, _ = flow.authorization_url(
         access_type="offline",
@@ -48,11 +60,23 @@ def google_callback(request: Request):
     if not code:
         return JSONResponse(status_code=400, content={"error": "Authorization code not found"})
 
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, 
-        scopes=SCOPES + ["https://www.googleapis.com/auth/userinfo.email", "openid"], 
-        redirect_uri=REDIRECT_URI
-    )
+    # Determine flow source
+    if os.path.exists(CLIENT_SECRETS_FILE):
+        flow = Flow.from_client_secrets_file(
+            CLIENT_SECRETS_FILE, 
+            scopes=SCOPES + ["https://www.googleapis.com/auth/userinfo.email", "openid"], 
+            redirect_uri=REDIRECT_URI
+        )
+    elif os.getenv("GOOGLE_CLIENT_SECRETS"):
+        client_config = json.loads(os.getenv("GOOGLE_CLIENT_SECRETS"))
+        flow = Flow.from_client_config(
+            client_config,
+            scopes=SCOPES + ["https://www.googleapis.com/auth/userinfo.email", "openid"],
+            redirect_uri=REDIRECT_URI,
+        )
+    else:
+        return JSONResponse(status_code=500, content={"error": "Google Client Secrets configuration lost during callback"})
+
     flow.fetch_token(code=code)
     creds = flow.credentials
 
