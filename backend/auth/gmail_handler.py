@@ -1,53 +1,44 @@
 import os
 import json
-from .utils import get_gmail_service, extract_email_body, extract_google_form_links, extract_event_details, HISTORY_FILE, OFFICIAL_CLUB_SENDERS
+from firebase_admin import firestore
+from .firebase_config import db
+from .utils import get_gmail_service, extract_email_body, extract_google_form_links, extract_event_details, OFFICIAL_CLUB_SENDERS
 
-PROCESSED_MSGS_FILE = "processed_messages.json"
-
-def get_last_history_id():
-    if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, "r") as f:
-            return json.load(f).get("lastHistoryId")
+def get_last_history_id(user_email):
+    if not user_email: return None
+    user_ref = db.collection("users").document(user_email.lower())
+    doc = user_ref.get()
+    if doc.exists:
+        return doc.to_dict().get("lastHistoryId")
     return None
 
-def save_history_id(history_id):
-    with open(HISTORY_FILE, "w") as f:
-        json.dump({"lastHistoryId": history_id}, f)
+def save_history_id(user_email, history_id):
+    if not user_email: return
+    user_ref = db.collection("users").document(user_email.lower())
+    user_ref.set({"lastHistoryId": history_id}, merge=True)
 
 def is_message_processed(msg_id):
-    if not os.path.exists(PROCESSED_MSGS_FILE):
-        return False
-    with open(PROCESSED_MSGS_FILE, "r") as f:
-        try:
-            processed = json.load(f)
-            return msg_id in processed
-        except:
-            return False
+    doc_ref = db.collection("processed_messages").document(msg_id)
+    return doc_ref.get().exists
 
 def mark_message_processed(msg_id):
-    processed = []
-    if os.path.exists(PROCESSED_MSGS_FILE):
-        with open(PROCESSED_MSGS_FILE, "r") as f:
-            try:
-                processed = json.load(f)
-            except:
-                pass
-    processed.append(msg_id)
-    # Keep only last 1000 to avoid file bloat
-    processed = processed[-1000:]
-    with open(PROCESSED_MSGS_FILE, "w") as f:
-        json.dump(processed, f)
+    doc_ref = db.collection("processed_messages").document(msg_id)
+    doc_ref.set({
+        "processed": True,
+        "timestamp": firestore.SERVER_TIMESTAMP
+    })
 
-def process_gmail_changes(new_history_id):
-    service = get_gmail_service()
+def process_gmail_changes(new_history_id, user_email=None):
+    service = get_gmail_service(user_email)
     if not service:
-        print("Error: No Gmail service available")
+        print(f"Error: No Gmail service available for {user_email}")
         return []
 
-    last_id = get_last_history_id()
+    last_id = get_last_history_id(user_email)
     if not last_id:
-        print("No lastHistoryId found, skipping history list")
-        save_history_id(new_history_id)
+        print(f"No lastHistoryId found for {user_email}, skipping history list")
+        if user_email:
+            save_history_id(user_email, new_history_id)
         return []
 
     try:
@@ -67,19 +58,20 @@ def process_gmail_changes(new_history_id):
                 msg_id = msg.get('id')
                 
                 if msg_id and not is_message_processed(msg_id):
-                    links = process_single_message(service, msg_id)
+                    links = process_single_message(service, msg_id, user_email)
                     if links:
                         extracted_links.extend(links)
                     mark_message_processed(msg_id)
 
-        save_history_id(new_history_id)
+        if user_email:
+            save_history_id(user_email, new_history_id)
         return extracted_links
 
     except Exception as e:
-        print(f"Error processing history: {e}")
+        print(f"Error processing history for {user_email}: {e}")
         return []
 
-def process_single_message(service, msg_id):
+def process_single_message(service, msg_id, user_email):
     try:
         msg_data = service.users().messages().get(
             userId="me",
@@ -104,7 +96,7 @@ def process_single_message(service, msg_id):
         
         if links:
             print(f"Extracted {len(links)} links from message {msg_id}")
-            save_extracted_links(links, msg_id, sender, subject, details)
+            save_extracted_links(links, msg_id, sender, subject, details, user_email)
             
         return links
 
@@ -112,13 +104,13 @@ def process_single_message(service, msg_id):
         print(f"Error processing message {msg_id}: {e}")
         return []
 
-def sync_historical_mails():
+def sync_historical_mails(user_email=None):
     """
     Search for past emails from official senders and process them.
     """
-    service = get_gmail_service()
+    service = get_gmail_service(user_email)
     if not service:
-        print("Error: No Gmail service available for sync")
+        print(f"Error: No Gmail service available for sync ({user_email})")
         return 0
 
     total_synced = 0
@@ -131,7 +123,7 @@ def sync_historical_mails():
             for msg_info in messages:
                 msg_id = msg_info['id']
                 if not is_message_processed(msg_id):
-                    links = process_single_message(service, msg_id)
+                    links = process_single_message(service, msg_id, user_email)
                     if links:
                         total_synced += len(links)
                     mark_message_processed(msg_id)
@@ -140,30 +132,22 @@ def sync_historical_mails():
             
     return total_synced
 
-def save_extracted_links(links, msg_id, sender, subject, details):
-    links_file = "extracted_links.json"
-    data = []
-    if os.path.exists(links_file):
-        with open(links_file, "r") as f:
-            try:
-                data = json.load(f)
-            except:
-                pass
-    
-    # Check for existing links to avoid duplicates in the file
-    existing_links = {item['link'] for item in data}
-    
+def save_extracted_links(links, msg_id, sender, subject, details, user_email):
     for link in links:
-        if link not in existing_links:
-            data.append({
-                "link": link,
-                "msg_id": msg_id,
-                "sender": sender,
-                "title": subject,
-                "venue": details.get("venue", "N/A"),
-                "date": details.get("date", "N/A"),
-                "time": details.get("time", "N/A")
-            })
-    
-    with open(links_file, "w") as f:
-        json.dump(data, f, indent=2)
+        # Create a unique doc ID to prevent duplicates in Firestore
+        doc_id = f"{user_email.lower()}_{msg_id}_{link[:50]}"
+        # Sanitize for firestore document id (remove problematic chars)
+        doc_id = "".join(c for c in doc_id if c.isalnum() or c in "_-")
+        
+        doc_ref = db.collection("club_mails").document(doc_id)
+        doc_ref.set({
+            "link": link,
+            "msg_id": msg_id,
+            "sender": sender,
+            "title": subject,
+            "venue": details.get("venue", "N/A"),
+            "date": details.get("date", "N/A"),
+            "time": details.get("time", "N/A"),
+            "recipient": user_email.lower() if user_email else "unknown",
+            "timestamp": firestore.SERVER_TIMESTAMP
+        }, merge=True)

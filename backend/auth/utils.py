@@ -13,6 +13,7 @@ OFFICIAL_CLUB_SENDERS = {
 TOKEN_FILE = "token.json"
 HISTORY_FILE = "history.json"
 CLIENT_SECRETS_FILE = "client_secret.json"
+TOKENS_DIR = "tokens"
 
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.readonly"
@@ -101,15 +102,51 @@ def extract_event_details(text: str) -> dict:
         
     return details
 
-def get_gmail_service():
-    if not os.path.exists(TOKEN_FILE):
-        return None
-    
-    creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
-    
+def get_gmail_service(user_email=None):
+    if not user_email:
+        # Fallback to legacy token.json if no user_email provided
+        if not os.path.exists(TOKEN_FILE):
+            return None
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+    else:
+        # Load from Firestore for Render/Cloud
+        from .firebase_config import db
+        user_ref = db.collection("users").document(user_email.lower())
+        doc = user_ref.get()
+        if not doc.exists:
+            print(f"No credentials found in Firestore for {user_email}")
+            return None
+        
+        user_data = doc.to_dict()
+        token_data = user_data.get("gmail_token")
+        if not token_data:
+            return None
+            
+        try:
+            # token_data could be a JSON string (from Flutter) or a dict
+            if isinstance(token_data, str):
+                info = json.loads(token_data)
+            else:
+                info = token_data
+            creds = Credentials.from_authorized_user_info(info, SCOPES)
+        except Exception as e:
+            print(f"Error parsing token for {user_email}: {e}")
+            return None
+
     if creds and creds.expired and creds.refresh_token:
-        creds.refresh(GoogleRequest())
-        with open(TOKEN_FILE, "w") as token:
-            token.write(creds.to_json())
+        try:
+            creds.refresh(GoogleRequest())
+            # Save refreshed token back
+            if user_email:
+                from .firebase_config import db
+                db.collection("users").document(user_email.lower()).set({
+                    "gmail_token": json.loads(creds.to_json())
+                }, merge=True)
+            else:
+                with open(TOKEN_FILE, "w") as token:
+                    token.write(creds.to_json())
+        except Exception as e:
+            print(f"Error refreshing token for {user_email}: {e}")
+            return None
             
     return build("gmail", "v1", credentials=creds)
