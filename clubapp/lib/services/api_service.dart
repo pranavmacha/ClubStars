@@ -5,7 +5,7 @@ import '../models/club_mail.dart';
 
 class ApiService {
   // Use 192.168.0.106 (your machine's local IP) for physical device
-  static const String baseUrl = 'http://192.168.0.106:8000';
+  static const String baseUrl = 'https://clubstars.onrender.com';
 
   Future<String?> getUserEmail() async {
     final prefs = await SharedPreferences.getInstance();
