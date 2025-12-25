@@ -144,13 +144,19 @@ def get_gmail_service(user_email=None):
                 creds = Credentials.from_authorized_user_info(info, SCOPES)
             elif "server_auth_code" in info and not info.get("refresh_token"):
                 # CRITICAL FIX: Exchange the code for a full token with refresh
-                print(f"Exchanging server_auth_code for {user_email}...")
                 client_config = get_client_config()
                 if client_config:
+                    # Debug: Check if client_id matches
+                    web_config = client_config.get("web") or client_config.get("installed")
+                    config_source = "Environment Variable" if os.getenv("GOOGLE_CLIENT_SECRETS") else "local client_secret.json"
+                    print(f"DEBUG: Using {config_source}. Backend Client ID: {backend_client_id}")
+                    print(f"DEBUG: Exchanging code for {user_email}...")
+                    
+                    # For mobile server_auth_code exchange, redirect_uri must be empty string
                     flow = Flow.from_client_config(
                         client_config,
                         scopes=SCOPES,
-                        redirect_uri=None
+                        redirect_uri='' # Try empty string as per some Google docs
                     )
                     flow.fetch_token(code=info["server_auth_code"])
                     creds = flow.credentials
