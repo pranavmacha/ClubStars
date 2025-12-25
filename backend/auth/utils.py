@@ -18,7 +18,10 @@ CLIENT_SECRETS_FILE = "client_secret.json"
 TOKENS_DIR = "tokens"
 
 SCOPES = [
-    "https://www.googleapis.com/auth/gmail.readonly"
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "openid"
 ]
 
 REDIRECT_URI = "http://localhost:8000/auth/google/callback"
