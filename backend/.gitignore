@@ -14,6 +14,7 @@ client_secret.json
 history.json
 extracted_links.json
 processed_messages.json
+serviceAccountKey.json
 
 # VS Code
 .vscode/

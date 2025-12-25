@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/api_service.dart';
 import '../models/club_mail.dart';
-import 'settings_screen.dart';
 import 'event_detail_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -14,91 +15,109 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _apiService = ApiService();
-  late Future<List<ClubMail>> _futureMails;
+  bool _isSyncing = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _futureMails = _apiService.fetchClubMails();
+  Future<void> _handleSync() async {
+    setState(() => _isSyncing = true);
+    try {
+      final count = await _apiService.syncPastMails();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Synced $count new links!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sync failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSyncing = false);
+      }
+    }
   }
 
-  Future<void> _refresh() async {
-    setState(() {
-      _futureMails = _apiService.fetchClubMails();
-    });
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Club Dashboard'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.sync),
+            icon: _isSyncing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.sync),
             tooltip: 'Sync past mails',
-            onPressed: () async {
-              try {
-                final count = await _apiService.syncPastMails();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Synced $count new links!')),
-                );
-                _refresh();
-              } catch (e) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Sync failed: $e')));
-              }
-            },
+            onPressed: _isSyncing ? null : _handleSync,
           ),
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _refresh),
           IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.pushNamed(context, SettingsScreen.route),
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: _logout,
           ),
         ],
       ),
-      body: FutureBuilder<List<ClubMail>>(
-        future: _futureMails,
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('club_mails')
+            .where('recipient', isEqualTo: user?.email)
+            .orderBy('timestamp', descending: true)
+            .snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error: ${snapshot.error}',
-                      textAlign: TextAlign.center,
-                    ),
-                    ElevatedButton(
-                      onPressed: _refresh,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No recent club mails found.'));
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          final mails = snapshot.data!;
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final docs = snapshot.data?.docs ?? [];
+
+          if (docs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.mail_outline, size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No recent club mails found.\nTry syncing your inbox!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            );
+          }
+
           return ListView.separated(
             padding: const EdgeInsets.all(12),
-            itemCount: mails.length,
+            itemCount: docs.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, i) {
-              final mail = mails[i];
+              final data = docs[i].data() as Map<String, dynamic>;
+              final mail = ClubMail.fromJson(data);
+              
               return Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(

@@ -1,0 +1,30 @@
+﻿Checking Firestore connection...
+Connection failed: 403 Cloud Firestore API has not been used in project clubstars-b5a06 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=clubstars-b5a06 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry. [reason: "SERVICE_DISABLED"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "firestore.googleapis.com"
+}
+metadata {
+  key: "serviceTitle"
+  value: "Cloud Firestore API"
+}
+metadata {
+  key: "containerInfo"
+  value: "clubstars-b5a06"
+}
+metadata {
+  key: "consumer"
+  value: "projects/clubstars-b5a06"
+}
+metadata {
+  key: "activationUrl"
+  value: "https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=clubstars-b5a06"
+}
+, locale: "en-US"
+message: "Cloud Firestore API has not been used in project clubstars-b5a06 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=clubstars-b5a06 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."
+, links {
+  description: "Google developers console API activation"
+  url: "https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=clubstars-b5a06"
+}
+]
