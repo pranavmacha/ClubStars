@@ -148,6 +148,7 @@ def get_gmail_service(user_email=None):
                 if client_config:
                     # Debug: Check if client_id matches
                     web_config = client_config.get("web") or client_config.get("installed")
+                    backend_client_id = web_config.get("client_id") if web_config else "Unknown"
                     config_source = "Environment Variable" if os.getenv("GOOGLE_CLIENT_SECRETS") else "local client_secret.json"
                     print(f"DEBUG: Using {config_source}. Backend Client ID: {backend_client_id}")
                     print(f"DEBUG: Exchanging code for {user_email}...")
