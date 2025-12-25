@@ -3,6 +3,7 @@ import json
 import base64
 import re
 from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request as GoogleRequest
 from googleapiclient.discovery import build
 
@@ -23,6 +24,14 @@ SCOPES = [
 REDIRECT_URI = "http://localhost:8000/auth/google/callback"
 
 # Helpers
+def get_client_config():
+    """ Load Google client configuration from file or environment. """
+    if os.path.exists(CLIENT_SECRETS_FILE):
+        with open(CLIENT_SECRETS_FILE, 'r') as f:
+            return json.load(f)
+    elif os.getenv("GOOGLE_CLIENT_SECRETS"):
+        return json.loads(os.getenv("GOOGLE_CLIENT_SECRETS"))
+    return None
 def extract_sender_email(sender: str) -> str:
     """
     Extract email from: Name <email@domain>
@@ -133,14 +142,44 @@ def get_gmail_service(user_email=None):
             # Check if we have the full 'Authorized User' format
             if all(k in info for k in ["client_id", "client_secret", "refresh_token"]):
                 creds = Credentials.from_authorized_user_info(info, SCOPES)
+            elif "server_auth_code" in info and not info.get("refresh_token"):
+                # CRITICAL FIX: Exchange the code for a full token with refresh
+                print(f"Exchanging server_auth_code for {user_email}...")
+                client_config = get_client_config()
+                if client_config:
+                    flow = Flow.from_client_config(
+                        client_config,
+                        scopes=SCOPES,
+                        redirect_uri=None
+                    )
+                    flow.fetch_token(code=info["server_auth_code"])
+                    creds = flow.credentials
+                    
+                    # Save the FULL credentials back to Firestore immediately
+                    db.collection("users").document(user_email.lower()).set({
+                        "gmail_token": json.loads(creds.to_json())
+                    }, merge=True)
+                    print(f"Successfully exchanged and saved tokens for {user_email}")
+                else:
+                    print(f"No client config found to exchange code for {user_email}")
+                    return None
             else:
-                # Fallback: Just use the access_token (Common for Flutter tokens)
-                # Note: This token will expire in 1 hour and cannot be refreshed
-                # unless a refresh_token was also saved.
+                # Fallback path - needs client_id/secret for refresh
+                client_config = get_client_config()
+                client_id = None
+                client_secret = None
+                if client_config:
+                    web_config = client_config.get("web") or client_config.get("installed")
+                    if web_config:
+                        client_id = web_config.get("client_id")
+                        client_secret = web_config.get("client_secret")
+
                 creds = Credentials(
                     token=info.get("access_token") or info.get("token"),
                     refresh_token=info.get("refresh_token"),
                     token_uri="https://oauth2.googleapis.com/token",
+                    client_id=client_id,
+                    client_secret=client_secret,
                     scopes=SCOPES
                 )
         except Exception as e:
