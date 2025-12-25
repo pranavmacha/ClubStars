@@ -21,8 +21,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
-      // 1. Trigger the Google Authentication flow
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      // 1. Trigger the Google Authentication flow with Gmail READ-ONLY scope
+      final GoogleSignInAccount? googleUser = await GoogleSignIn(
+        scopes: [
+          'https://www.googleapis.com/auth/gmail.readonly',
+        ],
+      ).signIn();
 
       if (googleUser == null) {
         // User canceled the sign-in
