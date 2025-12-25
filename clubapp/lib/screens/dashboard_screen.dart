@@ -84,6 +84,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
+            final error = snapshot.error.toString();
+            if (error.contains('failed-precondition') || error.contains('index')) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, size: 48, color: Colors.orange),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'This view requires a Firestore Index.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Please check your Google Cloud Console to enable the required composite index.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        error,
+                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 

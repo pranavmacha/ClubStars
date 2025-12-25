@@ -11,7 +11,7 @@ initialize_app()
 db = firestore.client()
 
 # Constants
-OFFICIAL_CLUB_SENDERS = {"asstdir.cac@vitap.ac.in"}
+OFFICIAL_CLUB_SENDERS = {"asstdir.cac@vitap.ac.in", "codered@vitap.ac.in"}
 GOOGLE_FORM_REGEX = re.compile(r"(https://docs\.google\.com/forms/[^\s<>]+|https://forms\.gle/[^\s<>]+)")
 VENUE_REGEX = re.compile(r"(?i)venue\s*[:\-]\s*([^\n\r]+)")
 DATE_REGEX = re.compile(r"(?i)date\s*[:\-]\s*([^\n\r]+)")

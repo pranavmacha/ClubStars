@@ -8,7 +8,8 @@ from googleapiclient.discovery import build
 
 # Constants
 OFFICIAL_CLUB_SENDERS = {
-    "asstdir.cac@vitap.ac.in"
+    "asstdir.cac@vitap.ac.in",
+    "codered@vitap.ac.in"
 }
 TOKEN_FILE = "token.json"
 HISTORY_FILE = "history.json"

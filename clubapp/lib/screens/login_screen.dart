@@ -26,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
         scopes: [
           'https://www.googleapis.com/auth/gmail.readonly',
         ],
+        serverClientId: '568469375549-3id2u5887p25ps8m6785f7n3v6i5kuhk.apps.googleusercontent.com', // Replace with your Web Client ID from Google Cloud Console
       ).signIn();
 
       if (googleUser == null) {
@@ -61,10 +62,10 @@ class _LoginScreenState extends State<LoginScreen> {
               'gmail_token': jsonEncode({
                 'access_token': googleAuth.accessToken,
                 'id_token': googleAuth.idToken,
-                // Note: Refresh token requires specific setup with google_sign_in
+                'server_auth_code': googleUser.serverAuthCode, // Backend can use this to get refresh token
               }),
               'last_login': FieldValue.serverTimestamp(),
-            });
+            }, SetOptions(merge: true));
 
         // 6. Store email locally for legacy components
         await _apiService.setUserEmail(email);
