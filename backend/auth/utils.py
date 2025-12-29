@@ -149,27 +149,30 @@ def get_gmail_service(user_email=None):
                 # CRITICAL FIX: Exchange the code for a full token with refresh
                 client_config = get_client_config()
                 if client_config:
-                    # Debug: Check if client_id matches
-                    web_config = client_config.get("web") or client_config.get("installed")
-                    backend_client_id = web_config.get("client_id") if web_config else "Unknown"
-                    config_source = "Environment Variable" if os.getenv("GOOGLE_CLIENT_SECRETS") else "local client_secret.json"
-                    print(f"DEBUG: Using {config_source}. Backend Client ID: {backend_client_id}")
                     print(f"DEBUG: Exchanging code for {user_email}...")
-                    
-                    # For mobile server_auth_code exchange, redirect_uri must be empty string
-                    flow = Flow.from_client_config(
-                        client_config,
-                        scopes=SCOPES,
-                        redirect_uri='' # Try empty string as per some Google docs
-                    )
-                    flow.fetch_token(code=info["server_auth_code"])
-                    creds = flow.credentials
-                    
-                    # Save the FULL credentials back to Firestore immediately
-                    db.collection("users").document(user_email.lower()).set({
-                        "gmail_token": json.loads(creds.to_json())
-                    }, merge=True)
-                    print(f"Successfully exchanged and saved tokens for {user_email}")
+                    try:
+                        # For mobile server_auth_code exchange, redirect_uri usually needs to be None
+                        flow = Flow.from_client_config(
+                            client_config,
+                            scopes=SCOPES,
+                            redirect_uri=None
+                        )
+                        flow.fetch_token(code=info["server_auth_code"])
+                        creds = flow.credentials
+                        
+                        # Save the FULL credentials back to Firestore immediately
+                        db.collection("users").document(user_email.lower()).set({
+                            "gmail_token": json.loads(creds.to_json())
+                        }, merge=True)
+                        print(f"Successfully exchanged and saved tokens for {user_email}")
+                    except Exception as exchange_error:
+                        print(f"Error during code exchange for {user_email}: {exchange_error}")
+                        if "invalid_grant" in str(exchange_error).lower():
+                            print(f"Clearing stale server_auth_code for {user_email}")
+                            db.collection("users").document(user_email.lower()).update({
+                                "gmail_token.server_auth_code": firestore.DELETE
+                            })
+                        return None
                 else:
                     print(f"No client config found to exchange code for {user_email}")
                     return None

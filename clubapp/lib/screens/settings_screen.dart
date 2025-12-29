@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'package:share_plus/share_plus.dart';
+
 class SettingsScreen extends StatelessWidget {
   static const route = '/settings';
   const SettingsScreen({super.key});
@@ -14,6 +16,13 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  void _shareApp() {
+    Share.share(
+      'Check out ClubStars! The ultimate app to manage VIT-AP club events effortlessly. 🚀✨',
+      subject: 'Elevating Campus Life',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,10 +31,17 @@ class SettingsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            ListTile(
+              leading: const Icon(Icons.share_outlined),
+              title: const Text('Share with Friends'),
+              subtitle: const Text('Spread the word about ClubStars'),
+              onTap: _shareApp,
+            ),
+            const Divider(),
             const ListTile(
               leading: Icon(Icons.info_outline),
               title: Text('About'),
-              subtitle: Text('ClubStars v1.2.0'),
+              subtitle: Text('ClubStars v1.3.0'),
             ),
             const Divider(),
             ListTile(

@@ -23,7 +23,12 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn(
-        scopes: ['https://www.googleapis.com/auth/gmail.readonly'],
+        scopes: [
+          'https://www.googleapis.com/auth/gmail.readonly',
+          'https://www.googleapis.com/auth/userinfo.email',
+          'https://www.googleapis.com/auth/userinfo.profile',
+          'openid',
+        ],
         serverClientId: AppConfig.googleWebClientId,
       ).signIn();
 
@@ -107,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 top: 16,
                 right: 16,
                 child: Text(
-                  'v1.2.0',
+                  'v1.3.0',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.5),
                     fontSize: 12,
