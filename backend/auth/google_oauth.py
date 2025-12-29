@@ -31,7 +31,7 @@ def google_login():
     if os.path.exists(CLIENT_SECRETS_FILE):
         flow = Flow.from_client_secrets_file(
             CLIENT_SECRETS_FILE,
-            scopes=SCOPES + ["https://www.googleapis.com/auth/userinfo.email", "openid"],
+            scopes=SCOPES,
             redirect_uri=REDIRECT_URI,
         )
     # 2. Try to load from Environment Variable
@@ -39,7 +39,7 @@ def google_login():
         client_config = json.loads(os.getenv("GOOGLE_CLIENT_SECRETS"))
         flow = Flow.from_client_config(
             client_config,
-            scopes=SCOPES + ["https://www.googleapis.com/auth/userinfo.email", "openid"],
+            scopes=SCOPES,
             redirect_uri=REDIRECT_URI,
         )
     else:
@@ -71,7 +71,7 @@ def google_callback(request: Request):
         client_config = json.loads(os.getenv("GOOGLE_CLIENT_SECRETS"))
         flow = Flow.from_client_config(
             client_config,
-            scopes=SCOPES + ["https://www.googleapis.com/auth/userinfo.email", "openid"],
+            scopes=SCOPES,
             redirect_uri=REDIRECT_URI,
         )
     else:

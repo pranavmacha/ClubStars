@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../services/api_service.dart';
 import '../models/club_mail.dart';
 import 'event_detail_screen.dart';
@@ -22,27 +23,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final count = await _apiService.syncPastMails();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Synced $count new links!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Synced $count new links!')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sync failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Sync failed: $e')));
       }
     } finally {
       if (mounted) {
         setState(() => _isSyncing = false);
       }
-    }
-  }
-
-  Future<void> _logout() async {
-    await FirebaseAuth.instance.signOut();
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
@@ -70,9 +64,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: _isSyncing ? null : _handleSync,
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: _logout,
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
           ),
         ],
       ),
@@ -84,6 +78,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
+            final error = snapshot.error.toString();
+            if (error.contains('failed-precondition') ||
+                error.contains('index')) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        size: 48,
+                        color: Colors.orange,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'This view requires a Firestore Index.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Please check your Google Cloud Console to enable the required composite index.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        error,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
@@ -117,7 +150,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             itemBuilder: (context, i) {
               final data = docs[i].data() as Map<String, dynamic>;
               final mail = ClubMail.fromJson(data);
-              
+
               return Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(
