@@ -219,7 +219,6 @@ def get_gmail_service(user_email=None):
 
 # --- Google Form Field Extraction ---
 
-FIELD_ID_REGEX = re.compile(r'[[(\d+),"(.*?)",.*?,.*?,[[(\d+),')
 # More robust extraction using FB_PUBLIC_LOAD_DATA_
 PUBLIC_DATA_REGEX = re.compile(r'var FB_PUBLIC_LOAD_DATA_ = (.*?);')
 
