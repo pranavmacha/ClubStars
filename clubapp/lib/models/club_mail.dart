@@ -6,6 +6,8 @@ class ClubMail {
   final String venue;
   final String date;
   final String time;
+  final Map<String, dynamic>? fieldMappings;
+  final String? recipient;
 
   ClubMail({
     required this.link,
@@ -15,6 +17,8 @@ class ClubMail {
     required this.venue,
     required this.date,
     required this.time,
+    this.fieldMappings,
+    this.recipient,
   });
 
   factory ClubMail.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class ClubMail {
       venue: json['venue'] ?? 'N/A',
       date: json['date'] ?? 'N/A',
       time: json['time'] ?? 'N/A',
+      fieldMappings: json['field_mappings'] as Map<String, dynamic>?,
+      recipient: json['recipient'] as String?,
     );
   }
 }

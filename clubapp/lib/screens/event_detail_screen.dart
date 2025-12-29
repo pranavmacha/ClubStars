@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/club_mail.dart';
+import '../services/profile_service.dart';
 
 class EventDetailScreen extends StatelessWidget {
   static const route = '/event-detail';
@@ -9,9 +10,33 @@ class EventDetailScreen extends StatelessWidget {
   const EventDetailScreen({super.key, required this.mail});
 
   Future<void> _launchUrl(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw Exception('Could not launch $uri');
+    String finalUrl = url;
+
+    // Auto-fill logic
+    if (mail.fieldMappings != null && mail.fieldMappings!.isNotEmpty) {
+      final profile = await ProfileService().getProfile();
+      final Uri uri = Uri.parse(url);
+      final Map<String, String> params = Map.from(uri.queryParameters);
+
+      mail.fieldMappings!.forEach((key, entryId) {
+        if (key == 'name' && profile['name']!.isNotEmpty) {
+          params[entryId] = profile['name']!;
+        } else if (key == 'reg_no' && profile['reg_no']!.isNotEmpty) {
+          params[entryId] = profile['reg_no']!;
+        } else if (key == 'phone' && profile['phone']!.isNotEmpty) {
+          params[entryId] = profile['phone']!;
+        } else if (key == 'email' && mail.recipient != null) {
+          params[entryId] = mail.recipient!;
+        }
+      });
+
+      finalUrl = uri.replace(queryParameters: params).toString();
+      debugPrint('Launching pre-filled URL: $finalUrl');
+    }
+
+    final Uri finalUri = Uri.parse(finalUrl);
+    if (!await launchUrl(finalUri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $finalUri');
     }
   }
 

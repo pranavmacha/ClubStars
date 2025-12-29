@@ -216,3 +216,67 @@ def get_gmail_service(user_email=None):
             return None
             
     return build("gmail", "v1", credentials=creds)
+
+# --- Google Form Field Extraction ---
+
+FIELD_ID_REGEX = re.compile(r'[[(\d+),"(.*?)",.*?,.*?,[[(\d+),')
+# More robust extraction using FB_PUBLIC_LOAD_DATA_
+PUBLIC_DATA_REGEX = re.compile(r'var FB_PUBLIC_LOAD_DATA_ = (.*?);')
+
+def extract_form_field_ids(url: str) -> dict:
+    """
+    Fetches the Google Form and extracts mapping of labels to entry IDs.
+    Example return: {"name": "entry.123456", "reg": "entry.789012"}
+    """
+    import urllib.request
+    
+    # Ensure it's the viewform URL
+    if "/viewform" not in url and "forms.gle" not in url:
+        # If it's an edit URL or something else, this might not work
+        if "/edit" in url:
+            url = url.replace("/edit", "/viewform")
+    
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=10) as response:
+            html = response.read().decode('utf-8')
+            
+        # Try to find FB_PUBLIC_LOAD_DATA_
+        match = PUBLIC_DATA_REGEX.search(html)
+        if not match:
+            print(f"DEBUG: Could not find FB_PUBLIC_LOAD_DATA_ in {url}")
+            return {}
+            
+        data_str = match.group(1)
+        data = json.loads(data_str)
+        
+        # Google Form Public Data Structure:
+        # data[1][1] contains the list of form items
+        items = data[1][1]
+        mapping = {}
+        
+        for item in items:
+            try:
+                # item[1] is the label
+                # item[4][0][0] is usually the entry ID
+                label = str(item[1]).lower()
+                entry_id = item[4][0][0]
+                
+                if "name" in label:
+                    mapping["name"] = f"entry.{entry_id}"
+                elif "reg" in label or "roll" in label:
+                    mapping["reg_no"] = f"entry.{entry_id}"
+                elif "email" in label:
+                    mapping["email"] = f"entry.{entry_id}"
+                elif "phone" in label or "mobile" in label:
+                    mapping["phone"] = f"entry.{entry_id}"
+                    
+            except (IndexError, TypeError):
+                continue
+                
+        return mapping
+        
+    except Exception as e:
+        print(f"Error extracting field IDs from {url}: {e}")
+        return {}
