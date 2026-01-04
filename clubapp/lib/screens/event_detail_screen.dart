@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../models/club_mail.dart';
-import '../services/profile_service.dart';
+import 'form_webview_screen.dart';
 
 class EventDetailScreen extends StatelessWidget {
   static const route = '/event-detail';
@@ -9,62 +8,12 @@ class EventDetailScreen extends StatelessWidget {
 
   const EventDetailScreen({super.key, required this.mail});
 
-  Future<void> _launchUrl(String url) async {
-    String finalUrl = url;
-
-    // Auto-fill logic
-    if (mail.fieldMappings != null && mail.fieldMappings!.isNotEmpty) {
-      final profile = await ProfileService().getProfile();
-      debugPrint('DEBUG: Profile data: $profile');
-      debugPrint('DEBUG: Field mappings: ${mail.fieldMappings}');
-      
-      final Uri uri = Uri.parse(url);
-      final Map<String, String> params = Map.from(uri.queryParameters);
-
-      mail.fieldMappings!.forEach((key, entryId) {
-        if (key == 'name' && profile['name']!.isNotEmpty) {
-          params[entryId] = profile['name']!;
-          debugPrint('DEBUG: Pre-filling $key with ${profile['name']} using $entryId');
-        } else if (key == 'reg_no' && profile['reg_no']!.isNotEmpty) {
-          params[entryId] = profile['reg_no']!;
-          debugPrint('DEBUG: Pre-filling $key with ${profile['reg_no']} using $entryId');
-        } else if (key == 'phone' && profile['phone']!.isNotEmpty) {
-          params[entryId] = profile['phone']!;
-          debugPrint('DEBUG: Pre-filling $key with ${profile['phone']} using $entryId');
-        } else if (key == 'whatsapp') {
-          final wa = profile['whatsapp']!.isNotEmpty ? profile['whatsapp'] : profile['phone'];
-          if (wa!.isNotEmpty) {
-            params[entryId] = wa;
-            debugPrint('DEBUG: Pre-filling $key with $wa using $entryId');
-          }
-        } else if (key == 'branch' && profile['branch']!.isNotEmpty) {
-          params[entryId] = profile['branch']!;
-          debugPrint('DEBUG: Pre-filling $key with ${profile['branch']} using $entryId');
-        } else if (key == 'year' && profile['year']!.isNotEmpty) {
-          params[entryId] = profile['year']!;
-          debugPrint('DEBUG: Pre-filling $key with ${profile['year']} using $entryId');
-        } else if (key == 'gender' && profile['gender']!.isNotEmpty) {
-          params[entryId] = profile['gender']!;
-          debugPrint('DEBUG: Pre-filling $key with ${profile['gender']} using $entryId');
-        } else if (key == 'hostel' && profile['hostel']!.isNotEmpty) {
-          params[entryId] = profile['hostel']!;
-          debugPrint('DEBUG: Pre-filling $key with ${profile['hostel']} using $entryId');
-        } else if (key == 'email' && mail.recipient != null) {
-          params[entryId] = mail.recipient!;
-          debugPrint('DEBUG: Pre-filling $key with ${mail.recipient} using $entryId');
-        }
-      });
-
-      finalUrl = uri.replace(queryParameters: params).toString();
-      debugPrint('Launching pre-filled URL: $finalUrl');
-    } else {
-      debugPrint('DEBUG: No field mappings found for this mail.');
-    }
-
-    final Uri finalUri = Uri.parse(finalUrl);
-    if (!await launchUrl(finalUri, mode: LaunchMode.externalApplication)) {
-      throw Exception('Could not launch $finalUri');
-    }
+  void _navigateToForm(BuildContext context) {
+    Navigator.pushNamed(
+      context,
+      FormWebViewScreen.route,
+      arguments: mail.link,
+    );
   }
 
   @override
@@ -101,7 +50,7 @@ class EventDetailScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: () => _launchUrl(mail.link),
+                  onPressed: () => _navigateToForm(context),
                   icon: const Icon(Icons.edit_note),
                   label: const Text(
                     'Register via Google Form',

@@ -6,6 +6,7 @@ import 'screens/permission_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/club_mails_screen.dart';
+import 'screens/form_webview_screen.dart';
 
 class ClubStarsApp extends StatelessWidget {
   const ClubStarsApp({super.key});
@@ -23,6 +24,10 @@ class ClubStarsApp extends StatelessWidget {
         DashboardScreen.route: (_) => const DashboardScreen(),
         SettingsScreen.route: (_) => const SettingsScreen(),
         ClubMailsScreen.route: (_) => const ClubMailsScreen(),
+        FormWebViewScreen.route: (context) {
+          final url = ModalRoute.of(context)!.settings.arguments as String;
+          return FormWebViewScreen(url: url);
+        },
       },
       initialRoute: SplashScreen.route,
     );

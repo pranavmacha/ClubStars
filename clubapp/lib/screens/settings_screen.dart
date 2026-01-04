@@ -68,95 +68,46 @@ class SettingsScreen extends StatelessWidget {
 
     final nameController = TextEditingController(text: profile['name']);
     final regController = TextEditingController(text: profile['reg_no']);
-    final phoneController = TextEditingController(text: profile['phone']);
-    final branchController = TextEditingController(text: profile['branch']);
-    final whatsappController = TextEditingController(text: profile['whatsapp']);
-
-    String? selectedYear = profile['year']!.isEmpty ? null : profile['year'];
-    String? selectedGender = profile['gender']!.isEmpty ? null : profile['gender'];
-    String? selectedHostel = profile['hostel']!.isEmpty ? null : profile['hostel'];
-
-    final years = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Alumni'];
-    final genders = ['Male', 'Female', 'Other'];
-    final hostelStatuses = ['Hosteller', 'Day Scholar'];
 
     if (!context.mounted) return;
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Auto-fill Profile'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Full Name'),
-                ),
-                TextField(
-                  controller: regController,
-                  decoration: const InputDecoration(labelText: 'Registration Number'),
-                ),
-                TextField(
-                  controller: branchController,
-                  decoration: const InputDecoration(labelText: 'Branch/Program'),
-                ),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedYear,
-                  decoration: const InputDecoration(labelText: 'Year'),
-                  items: years.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
-                  onChanged: (val) => setState(() => selectedYear = val),
-                ),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedGender,
-                  decoration: const InputDecoration(labelText: 'Gender'),
-                  items: genders.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
-                  onChanged: (val) => setState(() => selectedGender = val),
-                ),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedHostel,
-                  decoration: const InputDecoration(labelText: 'Hostel Status'),
-                  items: hostelStatuses.map((h) => DropdownMenuItem(value: h, child: Text(h))).toList(),
-                  onChanged: (val) => setState(() => selectedHostel = val),
-                ),
-                TextField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone Number (Optional)'),
-                  keyboardType: TextInputType.phone,
-                ),
-                TextField(
-                  controller: whatsappController,
-                  decoration: const InputDecoration(labelText: 'WhatsApp Number (Optional)'),
-                  keyboardType: TextInputType.phone,
-                ),
-              ],
+      builder: (context) => AlertDialog(
+        title: const Text('Auto-fill Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Full Name',
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                await profileService.saveProfile(
-                  name: nameController.text,
-                  regNo: regController.text,
-                  phone: phoneController.text,
-                  branch: branchController.text,
-                  year: selectedYear,
-                  gender: selectedGender,
-                  hostel: selectedHostel,
-                  whatsapp: whatsappController.text,
-                );
-                if (context.mounted) Navigator.pop(context);
-              },
-              child: const Text('Save'),
+            TextField(
+              controller: regController,
+              decoration: const InputDecoration(
+                labelText: 'Registration Number',
+              ),
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await profileService.saveProfile(
+                name: nameController.text,
+                regNo: regController.text,
+              );
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }
