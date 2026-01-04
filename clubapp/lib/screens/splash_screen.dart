@@ -30,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _initializeApp() async {
     try {
       // Add timeout to Firebase auth check
-      final user = await FirebaseAuth.instance.currentUser;
+      final user = FirebaseAuth.instance.currentUser;
       
       Future.delayed(_navigationDelay, () {
         if (!mounted) return;

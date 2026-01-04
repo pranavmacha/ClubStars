@@ -184,3 +184,29 @@ def get_club_mails(request: Request):
     except Exception as e:
         print(f"Error fetching mails from Firestore: {e}")
         return JSONResponse(status_code=500, content={"error": str(e)})
+@router.get("/debug/fix-mappings")
+def fix_missing_mappings():
+    """
+    Temporary debug endpoint to populate missing field_mappings for existing links.
+    """
+    from .utils import extract_form_field_ids
+    try:
+        mails_ref = db.collection("club_mails")
+        docs = mails_ref.stream()
+        
+        fixed_count = 0
+        for doc in docs:
+            data = doc.to_dict()
+            if not data.get("field_mappings"):
+                link = data.get("link")
+                if link:
+                    print(f"DEBUG: Fixing mapping for {link}")
+                    new_mappings = extract_form_field_ids(link)
+                    if new_mappings:
+                        doc.reference.update({"field_mappings": new_mappings})
+                        fixed_count += 1
+                        
+        return JSONResponse(content={"status": "success", "fixed_count": fixed_count})
+    except Exception as e:
+        print(f"Error in fix-mappings: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})

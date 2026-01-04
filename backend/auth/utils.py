@@ -229,22 +229,51 @@ def extract_form_field_ids(url: str) -> dict:
     """
     import urllib.request
     
-    # Ensure it's the viewform URL
-    if "/viewform" not in url and "forms.gle" not in url:
-        # If it's an edit URL or something else, this might not work
-        if "/edit" in url:
-            url = url.replace("/edit", "/viewform")
+    print(f"DEBUG: Processing URL: {url}")
     
     try:
         headers = {'User-Agent': 'Mozilla/5.0'}
+        
+        # 1. Handle redirects (especially for forms.gle)
+        # We use a custom opener to see where it lands
+        class RedirectHandler(urllib.request.HTTPRedirectHandler):
+            def http_error_302(self, req, fp, code, msg, headers):
+                print(f"DEBUG: Redirecting to: {headers['Location']}")
+                return super().http_error_302(req, fp, code, msg, headers)
+        
+        opener = urllib.request.build_opener(RedirectHandler)
+        urllib.request.install_opener(opener)
+        
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=10) as response:
-            html = response.read().decode('utf-8')
+        with urllib.request.urlopen(req, timeout=15) as response:
+            final_url = response.geturl()
+            print(f"DEBUG: Final landed URL: {final_url}")
             
-        # Try to find FB_PUBLIC_LOAD_DATA_
+            # Ensure it's the viewform URL for data extraction
+            if "/viewform" not in final_url:
+                if "/edit" in final_url:
+                    final_url = final_url.replace("/edit", "/viewform")
+                elif "/viewform" not in final_url and "?" not in final_url:
+                    # Append viewform if it looks like a base form URL
+                    if final_url.endswith("/"): final_url = final_url[:-1]
+                    final_url += "/viewform"
+            
+            # Refetch if the URL changed significantly and doesn't match the original
+            if final_url != response.geturl():
+                print(f"DEBUG: Re-fetching normalized URL: {final_url}")
+                req = urllib.request.Request(final_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=10) as resp2:
+                    html = resp2.read().decode('utf-8')
+            else:
+                html = response.read().decode('utf-8')
+            
+        # 2. Try to find FB_PUBLIC_LOAD_DATA_
         match = PUBLIC_DATA_REGEX.search(html)
         if not match:
             print(f"DEBUG: Could not find FB_PUBLIC_LOAD_DATA_ in {url}")
+            # Fallback check: is it a restricted form?
+            if "Sign in to continue" in html or "Service login" in html:
+                print(f"DEBUG: Form requires login, cannot scrape without session: {url}")
             return {}
             
         data_str = match.group(1)
@@ -255,27 +284,45 @@ def extract_form_field_ids(url: str) -> dict:
         items = data[1][1]
         mapping = {}
         
+        print(f"DEBUG: Found {len(items) if items else 0} items in form.")
+        
         for item in items:
             try:
                 # item[1] is the label
                 # item[4][0][0] is usually the entry ID
-                label = str(item[1]).lower()
-                entry_id = item[4][0][0]
+                label = str(item[1] or "").lower()
+                entry_data = item[4][0]
+                entry_id = entry_data[0]
+                
+                print(f"DEBUG: Found field: '{label}' -> {entry_id}")
                 
                 if "name" in label:
                     mapping["name"] = f"entry.{entry_id}"
-                elif "reg" in label or "roll" in label:
+                elif any(x in label for x in ["reg", "roll", "id number", "id no"]):
                     mapping["reg_no"] = f"entry.{entry_id}"
                 elif "email" in label:
                     mapping["email"] = f"entry.{entry_id}"
-                elif "phone" in label or "mobile" in label:
+                elif any(x in label for x in ["whatsapp", "wa"]):
+                    mapping["whatsapp"] = f"entry.{entry_id}"
+                elif any(x in label for x in ["phone", "mobile", "contact"]):
                     mapping["phone"] = f"entry.{entry_id}"
+                elif any(x in label for x in ["branch", "program", "course", "dept"]):
+                    mapping["branch"] = f"entry.{entry_id}"
+                elif any(x in label for x in ["year", "batch", "current year"]):
+                    mapping["year"] = f"entry.{entry_id}"
+                elif "gender" in label or "sex" in label:
+                    mapping["gender"] = f"entry.{entry_id}"
+                elif any(x in label for x in ["hostel", "staying in", "day scholar"]):
+                    mapping["hostel"] = f"entry.{entry_id}"
                     
-            except (IndexError, TypeError):
+            except (IndexError, TypeError, AttributeError):
                 continue
                 
+        print(f"DEBUG: Final mapping for {url}: {mapping}")
         return mapping
         
     except Exception as e:
         print(f"Error extracting field IDs from {url}: {e}")
+        import traceback
+        traceback.print_exc()
         return {}
