@@ -2,7 +2,7 @@ import os
 import json
 from firebase_admin import firestore
 from .firebase_config import db
-from .utils import get_gmail_service, extract_email_body, extract_google_form_links, extract_event_details, OFFICIAL_CLUB_SENDERS, extract_form_field_ids
+from .utils import get_gmail_service, extract_email_body, extract_google_form_links, extract_event_details, OFFICIAL_CLUB_SENDERS
 
 def get_last_history_id(user_email):
     if not user_email: return None
@@ -96,16 +96,7 @@ def process_single_message(service, msg_id, user_email):
         
         if links:
             print(f"Extracted {len(links)} links from message {msg_id}")
-            # Map each link to its field IDs
-            link_data = []
-            for link in links:
-                field_mappings = extract_form_field_ids(link)
-                link_data.append({
-                    "url": link,
-                    "field_mappings": field_mappings
-                })
-            
-            save_extracted_links(link_data, msg_id, sender, subject, details, user_email)
+            save_extracted_links(links, msg_id, sender, subject, details, user_email)
             
         return links
 
@@ -141,11 +132,8 @@ def sync_historical_mails(user_email=None):
             
     return total_synced
 
-def save_extracted_links(link_data, msg_id, sender, subject, details, user_email):
-    for item in link_data:
-        link = item["url"]
-        field_mappings = item["field_mappings"]
-        
+def save_extracted_links(links, msg_id, sender, subject, details, user_email):
+    for link in links:
         # Create a unique doc ID to prevent duplicates in Firestore
         doc_id = f"{user_email.lower()}_{msg_id}_{link[:50]}"
         # Sanitize for firestore document id (remove problematic chars)
@@ -154,7 +142,6 @@ def save_extracted_links(link_data, msg_id, sender, subject, details, user_email
         doc_ref = db.collection("club_mails").document(doc_id)
         doc_ref.set({
             "link": link,
-            "field_mappings": field_mappings,
             "msg_id": msg_id,
             "sender": sender,
             "title": subject,
