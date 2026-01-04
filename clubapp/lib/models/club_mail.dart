@@ -7,6 +7,7 @@ class ClubMail {
   final String date;
   final String time;
   final String? recipient;
+  final String? bannerUrl;
 
   ClubMail({
     required this.link,
@@ -17,6 +18,7 @@ class ClubMail {
     required this.date,
     required this.time,
     this.recipient,
+    this.bannerUrl,
   });
 
   factory ClubMail.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class ClubMail {
       date: json['date'] ?? 'N/A',
       time: json['time'] ?? 'N/A',
       recipient: json['recipient'] as String?,
+      bannerUrl: json['banner_url'] as String?,
     );
   }
 }

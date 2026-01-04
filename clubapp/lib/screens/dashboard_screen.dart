@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../services/api_service.dart';
 import '../models/club_mail.dart';
 import 'event_detail_screen.dart';
+import '../services/club_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   static const route = '/dashboard';
@@ -153,35 +154,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               return Card(
                 elevation: 2,
+                clipBehavior: Clip.antiAlias,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(12),
-                  leading: const CircleAvatar(
-                    backgroundColor: Colors.deepPurpleAccent,
-                    child: Icon(Icons.event, color: Colors.white),
-                  ),
-                  title: Text(
-                    mail.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      Text('🗓️ ${mail.date}  •  🕒 ${mail.time}'),
-                      const SizedBox(height: 2),
-                      Text(
-                        '📍 ${mail.venue}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+                child: InkWell(
                   onTap: () {
                     Navigator.push(
                       context,
@@ -190,6 +167,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     );
                   },
+                  child: Column(
+                    children: [
+                      // Banner Section
+                      StreamBuilder<List<Map<String, dynamic>>>(
+                        stream: ClubService().getClubsStream(),
+                        builder: (context, snapshot) {
+                          String? bannerUrl = mail.bannerUrl;
+                          
+                          if (bannerUrl == null && snapshot.hasData) {
+                            final titleLower = mail.title.toLowerCase();
+                            for (final club in snapshot.data!) {
+                              final keywords = List<String>.from(club['keywords'] ?? []);
+                              if (keywords.any((k) => titleLower.contains(k.toLowerCase()))) {
+                                bannerUrl = club['bannerUrl'];
+                                break;
+                              }
+                            }
+                          }
+
+                          return Container(
+                            height: 100,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.deepPurple.withOpacity(0.1),
+                              image: bannerUrl != null
+                                  ? DecorationImage(
+                                      image: NetworkImage(bannerUrl),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: bannerUrl == null
+                                ? Center(
+                                    child: Icon(
+                                      Icons.event_note,
+                                      color: Colors.deepPurple.withOpacity(0.3),
+                                      size: 40,
+                                    ),
+                                  )
+                                : null,
+                          );
+                        },
+                      ),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        title: Text(
+                          mail.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text(mail.date, style: const TextStyle(fontSize: 12)),
+                              const SizedBox(width: 12),
+                              const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  mail.venue,
+                                  style: const TextStyle(fontSize: 12),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

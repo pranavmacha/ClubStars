@@ -112,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 top: 16,
                 right: 16,
                 child: Text(
-                  'v1.3.0',
+                  'v1.4.0',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.5),
                     fontSize: 12,

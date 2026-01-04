@@ -7,6 +7,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/club_mails_screen.dart';
 import 'screens/form_webview_screen.dart';
+import 'screens/president_portal_screen.dart';
 
 class ClubStarsApp extends StatelessWidget {
   const ClubStarsApp({super.key});
@@ -27,6 +28,10 @@ class ClubStarsApp extends StatelessWidget {
         FormWebViewScreen.route: (context) {
           final url = ModalRoute.of(context)!.settings.arguments as String;
           return FormWebViewScreen(url: url);
+        },
+        PresidentPortalScreen.route: (context) {
+          final data = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return PresidentPortalScreen(clubData: data);
         },
       },
       initialRoute: SplashScreen.route,

@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/profile_service.dart';
+import '../services/club_service.dart';
+import 'president_portal_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   static const route = '/settings';
@@ -38,6 +40,29 @@ class SettingsScreen extends StatelessWidget {
               onTap: () => _showProfileDialog(context),
             ),
             const Divider(),
+            FutureBuilder<Map<String, dynamic>?>(
+              future: ClubService().getClubForPresident(FirebaseAuth.instance.currentUser?.email ?? ''),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data != null) {
+                  return Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.admin_panel_settings_outlined, color: Colors.deepPurple),
+                        title: const Text('President Portal'),
+                        subtitle: const Text('Manage club banners and assets'),
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          PresidentPortalScreen.route,
+                          arguments: snapshot.data,
+                        ),
+                      ),
+                      const Divider(),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.share_outlined),
               title: const Text('Share with Friends'),
@@ -48,7 +73,7 @@ class SettingsScreen extends StatelessWidget {
             const ListTile(
               leading: Icon(Icons.info_outline),
               title: Text('About'),
-              subtitle: Text('ClubStars v1.3.0'),
+              subtitle: Text('ClubStars v1.5.0'),
             ),
             const Divider(),
             ListTile(

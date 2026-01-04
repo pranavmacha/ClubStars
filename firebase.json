@@ -10,5 +10,8 @@
             ],
             "runtime": "python311"
         }
-    ]
+    ],
+    "storage": {
+        "rules": "storage.rules"
+    }
 }
