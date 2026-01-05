@@ -91,15 +91,8 @@ ClubStars/
 
 ---
 
-## 🧪 Quality & Testing
-
--   **Unit Tests**: Over 29 automated tests covering models, services, and logic.
--   **Logging**: Structured logging via `AppLogger` for easy debugging.
--   **Error Handling**: Unified error management system across the entire application.
-
----
 
 ## 🏆 Hackathon Submission
-This project was developed with a focus on **User Experience (UX)**, **Automation**, and **Scalability**. By reducing the "friction" of event discovery, ClubStars helps increase student engagement across campus.
+This project was developed with a focus on **User Experience (UX)**, **Automation**, and **Scalability**.ClubStars helps increase student engagement across campus.
 
 **Developed by:** Pranav Macha & Team
