@@ -41,7 +41,8 @@ class SettingsScreen extends StatelessWidget {
               onTap: () => _showProfileDialog(context),
             ),
             const Divider(),
-            if (FirebaseAuth.instance.currentUser?.email == 'pranav.24bce7150@vitapstudent.ac.in')
+            if (FirebaseAuth.instance.currentUser?.email == 'pranav.24bce7150@vitapstudent.ac.in' ||
+                FirebaseAuth.instance.currentUser?.email == 'karthikeya.23mic7284@vitapstudent.ac.in')
               Column(
                 children: [
                   ListTile(
