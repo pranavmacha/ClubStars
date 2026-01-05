@@ -85,85 +85,137 @@ class _AdminConsoleScreenState extends State<AdminConsoleScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 20,
-          right: 20,
-          top: 20,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Edit Club',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Club Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: presidentsController,
-                decoration: const InputDecoration(
-                  labelText: 'President Emails (comma separated)',
-                  border: OutlineInputBorder(),
-                  helperText: 'Allows these users to access President Portal',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: keywordsController,
-                decoration: const InputDecoration(
-                  labelText: 'Keywords (comma separated)',
-                  border: OutlineInputBorder(),
-                  helperText: 'Used for matching event banners',
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+      builder: (context) {
+        bool isSaving = false;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 20,
+              right: 20,
+              top: 20,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Edit Club',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Club Name',
+                      border: OutlineInputBorder(),
+                    ),
+                    enabled: !isSaving,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: presidentsController,
+                    decoration: const InputDecoration(
+                      labelText: 'President Emails (comma separated)',
+                      border: OutlineInputBorder(),
+                      helperText: 'Allows these users to access President Portal',
+                    ),
+                    enabled: !isSaving,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: keywordsController,
+                    decoration: const InputDecoration(
+                      labelText: 'Keywords (comma separated)',
+                      border: OutlineInputBorder(),
+                      helperText: 'Used for matching event banners',
+                    ),
+                    enabled: !isSaving,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              setModalState(() => isSaving = true);
+                              try {
+                                final presidents = presidentsController.text
+                                    .split(',')
+                                    .map((s) => s.trim())
+                                    .where((s) => s.isNotEmpty)
+                                    .toList();
+                                final keywords = keywordsController.text
+                                    .split(',')
+                                    .map((s) => s.trim())
+                                    .where((s) => s.isNotEmpty)
+                                    .toList();
+
+                                await _clubService.updateClubPresidents(
+                                  club['id'],
+                                  presidents,
+                                );
+                                await _clubService.updateClubKeywords(
+                                  club['id'],
+                                  keywords,
+                                );
+
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Club updated successfully'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Failed to update: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } finally {
+                                if (context.mounted) {
+                                  setModalState(() => isSaving = false);
+                                }
+                              }
+                            },
+                      child: isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text('Save Changes'),
                     ),
                   ),
-                  onPressed: () async {
-                    final presidents = presidentsController.text
-                        .split(',')
-                        .map((s) => s.trim())
-                        .where((s) => s.isNotEmpty)
-                        .toList();
-                    final keywords = keywordsController.text
-                        .split(',')
-                        .map((s) => s.trim())
-                        .where((s) => s.isNotEmpty)
-                        .toList();
-
-                    await _clubService.updateClubPresidents(club['id'], presidents);
-                    await _clubService.updateClubKeywords(club['id'], keywords);
-
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  child: const Text('Save Changes'),
-                ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+            ),
+          );
+        },
+      );
+    },
+  );
+}
 }

@@ -43,6 +43,22 @@ dependencies:
   google_sign_in: ^6.2.1
   share_plus: ^10.1.1
   webview_flutter: ^4.10.0
+  
+  # State management and dependency injection
+  provider: ^6.0.0
+  get_it: ^7.5.0
+  
+  # Secure storage for sensitive data
+  flutter_secure_storage: ^9.0.0
+  
+  # HTTP client with interceptors
+  dio: ^5.0.0
+  
+  # Logging
+  logger: ^2.0.0
+  
+  # Model generation (optional, for type safety)
+  freezed_annotation: ^2.4.0
 
 dev_dependencies:
   flutter_test:
@@ -55,6 +71,8 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.13.1
+  build_runner: ^2.4.0
+  freezed: ^2.4.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
