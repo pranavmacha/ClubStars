@@ -1,3 +1,8 @@
+As we as using the free version of Render the backend will turn down after 15mins to turn it back on we have to login to the app and press the refresh button and wait 1min then re-login to the app.
+The Admin Permissions are given to Karthikeya's Collage Gmail id,The app will scan the gamils comming from asst director clubs and chapter,my gmail and karthikeya's gmail so you can guys forward the clubs related gmails from collage gmail id to any outher gmail id to check the fuctionality of the app Thank You!!
+
+while logging in google will ask different permission you can safely accept it,pls retry 1-2 times if there is any error
+
 # 🌟 ClubStars
 
 **The Ultimate Campus Engagement Hub.**
