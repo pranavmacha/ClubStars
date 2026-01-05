@@ -1,0 +1,26 @@
+# Internal Documentation (Hide from GitHub/Hackathon)
+Agent.md
+CODE_REVIEW.md
+DEVELOPER_GUIDE.md
+IMPLEMENTATION_COMPLETE.md
+INDEX.md
+walkthrough.md
+
+# Python / Backend
+backend/.env
+backend/__pycache__/
+backend/venv/
+backend/.venv/
+backend/*token.json
+backend/client_secret.json
+backend/serviceAccountKey.json
+
+# Flutter / App
+clubapp/.dart_tool/
+clubapp/build/
+clubapp/.flutter-plugins
+clubapp/.flutter-plugins-dependencies
+
+# OS Files
+.DS_Store
+Thumbs.db
