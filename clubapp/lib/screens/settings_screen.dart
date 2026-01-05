@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
 import 'package:share_plus/share_plus.dart';
+import '../services/profile_service.dart';
+import '../services/club_service.dart';
+import 'president_portal_screen.dart';
+import 'admin_console_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   static const route = '/settings';
@@ -32,6 +35,49 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           children: [
             ListTile(
+              leading: const Icon(Icons.person_outline),
+              title: const Text('Auto-fill Profile'),
+              subtitle: const Text('Pre-fill forms with your details'),
+              onTap: () => _showProfileDialog(context),
+            ),
+            const Divider(),
+            if (FirebaseAuth.instance.currentUser?.email == 'pranav.24bce7150@vitapstudent.ac.in' ||
+                FirebaseAuth.instance.currentUser?.email == 'karthikeya.23mic7284@vitapstudent.ac.in')
+              Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.security, color: Colors.indigo),
+                    title: const Text('Admin Console'),
+                    subtitle: const Text('Manage all clubs and permissions'),
+                    onTap: () => Navigator.pushNamed(context, AdminConsoleScreen.route),
+                  ),
+                  const Divider(),
+                ],
+              ),
+            FutureBuilder<Map<String, dynamic>?>(
+              future: ClubService().getClubForPresident(FirebaseAuth.instance.currentUser?.email ?? ''),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data != null) {
+                  return Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.admin_panel_settings_outlined, color: Colors.deepPurple),
+                        title: const Text('President Portal'),
+                        subtitle: const Text('Manage club banners and assets'),
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          PresidentPortalScreen.route,
+                          arguments: snapshot.data,
+                        ),
+                      ),
+                      const Divider(),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.share_outlined),
               title: const Text('Share with Friends'),
               subtitle: const Text('Spread the word about ClubStars'),
@@ -41,7 +87,7 @@ class SettingsScreen extends StatelessWidget {
             const ListTile(
               leading: Icon(Icons.info_outline),
               title: Text('About'),
-              subtitle: Text('ClubStars v1.3.0'),
+              subtitle: Text('ClubStars v1.6.0'),
             ),
             const Divider(),
             ListTile(
@@ -51,6 +97,56 @@ class SettingsScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showProfileDialog(BuildContext context) async {
+    final profileService = ProfileService();
+    final profile = await profileService.getProfile();
+
+    final nameController = TextEditingController(text: profile['name']);
+    final regController = TextEditingController(text: profile['reg_no']);
+
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Auto-fill Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Full Name',
+              ),
+            ),
+            TextField(
+              controller: regController,
+              decoration: const InputDecoration(
+                labelText: 'Registration Number',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await profileService.saveProfile(
+                name: nameController.text,
+                regNo: regController.text,
+              );
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }

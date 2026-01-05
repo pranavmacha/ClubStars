@@ -140,6 +140,16 @@ def save_extracted_links(links, msg_id, sender, subject, details, user_email):
         doc_id = "".join(c for c in doc_id if c.isalnum() or c in "_-")
         
         doc_ref = db.collection("club_mails").document(doc_id)
+        
+        # Look up club banner
+        banner_url = None
+        try:
+            club_query = db.collection("clubs").where("sender_email", "==", sender).limit(1).get()
+            if club_query:
+                banner_url = club_query[0].to_dict().get("bannerUrl")
+        except Exception as e:
+            print(f"Error fetching club banner for {sender}: {e}")
+
         doc_ref.set({
             "link": link,
             "msg_id": msg_id,
@@ -148,6 +158,7 @@ def save_extracted_links(links, msg_id, sender, subject, details, user_email):
             "venue": details.get("venue", "N/A"),
             "date": details.get("date", "N/A"),
             "time": details.get("time", "N/A"),
+            "banner_url": banner_url,
             "recipient": user_email.lower() if user_email else "unknown",
             "timestamp": firestore.SERVER_TIMESTAMP
         }, merge=True)

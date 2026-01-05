@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../models/club_mail.dart';
+import 'form_webview_screen.dart';
 
 class EventDetailScreen extends StatelessWidget {
   static const route = '/event-detail';
@@ -8,11 +8,12 @@ class EventDetailScreen extends StatelessWidget {
 
   const EventDetailScreen({super.key, required this.mail});
 
-  Future<void> _launchUrl(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw Exception('Could not launch $uri');
-    }
+  void _navigateToForm(BuildContext context) {
+    Navigator.pushNamed(
+      context,
+      FormWebViewScreen.route,
+      arguments: mail.link,
+    );
   }
 
   @override
@@ -49,7 +50,7 @@ class EventDetailScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: () => _launchUrl(mail.link),
+                  onPressed: () => _navigateToForm(context),
                   icon: const Icon(Icons.edit_note),
                   label: const Text(
                     'Register via Google Form',
