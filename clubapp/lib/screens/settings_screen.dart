@@ -87,7 +87,7 @@ class SettingsScreen extends StatelessWidget {
             const ListTile(
               leading: Icon(Icons.info_outline),
               title: Text('About'),
-              subtitle: Text('ClubStars v1.5.0'),
+              subtitle: Text('ClubStars v1.6.0'),
             ),
             const Divider(),
             ListTile(

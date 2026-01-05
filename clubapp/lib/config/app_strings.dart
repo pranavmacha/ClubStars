@@ -2,7 +2,7 @@
 abstract class AppStrings {
   // General
   static const String appName = 'ClubStars';
-  static const String appVersion = '1.4.0';
+  static const String appVersion = '1.6.0';
 
   // Login Screen
   static const String loginTitle = 'Club Dashboard';
