@@ -13,13 +13,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/health")
-def health_check():
-    """
-    Simple health check endpoint to verify the server is up.
-    Also used to wake up the server from cold starts.
-    """
-    return {"status": "ok", "message": "ClubStars Backend is awake!"}
 
 # Include routers
 app.include_router(google_oauth_router)
