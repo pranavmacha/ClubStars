@@ -17,7 +17,7 @@ abstract class ApiConfig {
     }
   }
 
-  static const Duration apiTimeout = Duration(seconds: 45);
+  static const Duration apiTimeout = Duration(seconds: 30);
   static const int maxRetries = 3;
   static const Duration retryDelay = Duration(seconds: 1);
 }

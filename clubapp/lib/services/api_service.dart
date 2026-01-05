@@ -14,8 +14,6 @@ class ApiService {
   ApiService() {
     _baseUrl = ApiConfig.baseUrl;
     _initializeDio();
-    // Proactively warm up the server
-    warmUpServer();
   }
 
   /// Initialize Dio with interceptors and configuration
@@ -118,7 +116,6 @@ class ApiService {
         sendTimeout: const Duration(minutes: 2),
         receiveTimeout: const Duration(minutes: 2),
       );
-
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/google/sync',
         options: options,
@@ -140,19 +137,6 @@ class ApiService {
     }
   }
 
-  /// Simple ping to "wake up" the server from cold start
-  Future<void> warmUpServer() async {
-    try {
-      AppLogger.i('Waking up server...');
-      await _dio.get('/health', options: Options(
-        sendTimeout: const Duration(seconds: 60),
-        receiveTimeout: const Duration(seconds: 60),
-      ));
-      AppLogger.i('Server is awake');
-    } catch (e) {
-      AppLogger.v('Server warm-up ping failed (might still be waking up)');
-    }
-  }
 
   /// Get login URL for OAuth flow
   String get loginUrl => '$_baseUrl/auth/google/login';
@@ -233,30 +217,27 @@ class RetryInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
+    // Initialize retry count if it doesn't exist
+    int retryCount = err.requestOptions.extra['retryCount'] ?? 0;
+
     // Only retry on network errors or server errors (5xx)
-    if (_shouldRetry(err) && err.requestOptions.extra['retryCount'] != null) {
-      final retryCount = err.requestOptions.extra['retryCount'] as int;
+    if (_shouldRetry(err) && retryCount < maxRetries) {
+      retryCount++;
+      err.requestOptions.extra['retryCount'] = retryCount;
 
-      if (retryCount < maxRetries) {
-        err.requestOptions.extra['retryCount'] = retryCount + 1;
+      AppLogger.i(
+        'Retrying request ($retryCount/$maxRetries): ${err.requestOptions.path}',
+      );
 
-        AppLogger.i(
-          'Retrying request (${retryCount + 1}/$maxRetries): ${err.requestOptions.path}',
-        );
+      await Future.delayed(retryDelay);
 
-        await Future.delayed(retryDelay);
-
-        try {
-          final response = await dio.fetch(err.requestOptions);
-          return handler.resolve(response);
-        } catch (e) {
-          return handler.next(err);
-        }
+      try {
+        final response = await dio.fetch(err.requestOptions);
+        return handler.resolve(response);
+      } catch (e) {
+        return handler.next(err);
       }
     }
-
-    // Initialize retry count
-    err.requestOptions.extra['retryCount'] = 1;
 
     return handler.next(err);
   }
