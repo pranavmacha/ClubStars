@@ -32,8 +32,13 @@ REDIRECT_URI = "http://localhost:8000/auth/google/callback"
 # Helpers
 def get_client_config():
     """ Load Google client configuration from file or environment. """
-    if os.path.exists(CLIENT_SECRETS_FILE):
-        with open(CLIENT_SECRETS_FILE, 'r') as f:
+    # Get the directory of the current file (backend/auth/utils.py)
+    # and go up to the backend directory
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    secrets_path = os.path.join(base_dir, CLIENT_SECRETS_FILE)
+    
+    if os.path.exists(secrets_path):
+        with open(secrets_path, 'r') as f:
             return json.load(f)
     elif os.getenv("GOOGLE_CLIENT_SECRETS"):
         return json.loads(os.getenv("GOOGLE_CLIENT_SECRETS"))
@@ -193,9 +198,9 @@ def get_gmail_service(user_email=None):
                 creds = Credentials(
                     token=info.get("access_token") or info.get("token"),
                     refresh_token=info.get("refresh_token"),
-                    token_uri="https://oauth2.googleapis.com/token",
-                    client_id=client_id,
-                    client_secret=client_secret,
+                    token_uri=info.get("token_uri") or "https://oauth2.googleapis.com/token",
+                    client_id=client_id or info.get("client_id"),
+                    client_secret=client_secret or info.get("client_secret"),
                     scopes=SCOPES
                 )
         except Exception as e:
