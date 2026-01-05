@@ -183,31 +183,40 @@ class _PresidentPortalScreenState extends State<PresidentPortalScreen> {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'Search Keywords',
+                  'Search Keywords (Locked)',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Events with these words in their title will show your banner (e.g. GFG, GeeksforGeeks).',
+                  'Only the Super Admin can change these to ensure system integrity.',
                   style: TextStyle(color: Colors.grey[600], fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _keywordController,
+                  readOnly: true,
                   decoration: InputDecoration(
-                    hintText: 'Separate by commas',
+                    hintText: 'No keywords set',
+                    filled: true,
+                    fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.save, color: Colors.deepPurple),
-                      onPressed: _saveKeywords,
+                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'Note: This method is 100% free and does not require a paid Firebase plan.',
+                  'Note: To change your keywords, please contact the Super Admin.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'This method is 100% free and does not require a paid Firebase plan.',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey,

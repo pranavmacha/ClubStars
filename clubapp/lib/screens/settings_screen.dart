@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../services/profile_service.dart';
 import '../services/club_service.dart';
 import 'president_portal_screen.dart';
+import 'admin_console_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   static const route = '/settings';
@@ -40,6 +41,18 @@ class SettingsScreen extends StatelessWidget {
               onTap: () => _showProfileDialog(context),
             ),
             const Divider(),
+            if (FirebaseAuth.instance.currentUser?.email == 'pranav.24bce7150@vitapstudent.ac.in')
+              Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.security, color: Colors.indigo),
+                    title: const Text('Admin Console'),
+                    subtitle: const Text('Manage all clubs and permissions'),
+                    onTap: () => Navigator.pushNamed(context, AdminConsoleScreen.route),
+                  ),
+                  const Divider(),
+                ],
+              ),
             FutureBuilder<Map<String, dynamic>?>(
               future: ClubService().getClubForPresident(FirebaseAuth.instance.currentUser?.email ?? ''),
               builder: (context, snapshot) {

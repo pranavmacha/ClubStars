@@ -82,10 +82,18 @@ I have implemented a new role-based feature allowing Club Presidents to manage t
 #### 4. **Real-Time Global Refresh**
 - When a president updates their banner link or keywords, the change is pushed to **every student's app instantly** via Firestore cloud streams.
 
-### 🧪 How to Test the New Feature
-1.  **Login** as `pranav.24bce7150@vitapstudent.ac.in`.
-2.  Go to **Settings** -> **President Portal**.
-3.  Add keywords like `GFG` and paste an image URL.
-4.  Go back to the **Dashboard** (or check on a friend's device) and see the GFG event cards update with the banner in real-time!
+### Phase 4: Super Admin Console (The Final Stretch) 🛡️
 
-**Current Status**: 🟢 President Portal & Dynamic Banners Active
+We have now added a **Super Admin Tier** to handle high-volume club management directly from the phone.
+
+- **Admin Entry**: A special **"Admin Console"** appears in Settings only for `pranav.24bce7150@vitapstudent.ac.in`.
+- **Global Permissions**: Grant/Revoke President rights for any club instantly by email.
+- **Centralized Keyword Control**: Only the Super Admin can set keywords; this prevents banner hijacking and ensures integrity. Club Presidents can view their keywords but cannot edit them.
+
+### 🧪 How to Test Admin Features
+1.  Go to **Settings**. Since you are the admin, you'll see **Admin Console**.
+2.  Select **GeeksforGeeks**.
+3.  Add a friend's email to the "President" list.
+4.  Have that friend log in; they will now see the **President Portal** on their phone!
+
+**Current Status**: 🛡️ Full Hierarchy (Admin -> President -> Student) Live

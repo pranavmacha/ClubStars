@@ -32,6 +32,13 @@ class ClubService {
     });
   }
 
+  /// Updates the authorized presidents for a club
+  Future<void> updateClubPresidents(String clubId, List<String> emails) async {
+    await _db.collection('clubs').doc(clubId).update({
+      'presidents': emails.map((e) => e.trim().toLowerCase()).toList(),
+    });
+  }
+
   /// Updates the keywords used to match this club to events
   Future<void> updateClubKeywords(String clubId, List<String> keywords) async {
     await _db.collection('clubs').doc(clubId).update({
