@@ -13,7 +13,8 @@ OFFICIAL_CLUB_SENDERS = {
     "codered@vitap.ac.in",
     # Test senders (Add your forwarding email here)
     "dheeraj.24bce7156@vitapstudent.ac.in",
-    "pranav.24bce7150@vitapstudent.ac.in"
+    "pranav.24bce7150@vitapstudent.ac.in",
+    "karthikeya.23mic7284@vitapstudent.ac.in"
 }
 TOKEN_FILE = "token.json"
 HISTORY_FILE = "history.json"
