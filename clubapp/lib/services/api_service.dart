@@ -14,6 +14,8 @@ class ApiService {
   ApiService() {
     _baseUrl = ApiConfig.baseUrl;
     _initializeDio();
+    // Proactively warm up the server
+    warmUpServer();
   }
 
   /// Initialize Dio with interceptors and configuration
@@ -110,8 +112,11 @@ class ApiService {
       AppLogger.i('Syncing past mails...');
       final email = await getUserEmail();
 
+      // Increased timeout specifically for sync which can be slow
       final options = Options(
         headers: email != null ? {'user-email': email} : {},
+        sendTimeout: const Duration(minutes: 2),
+        receiveTimeout: const Duration(minutes: 2),
       );
 
       final response = await _dio.post<Map<String, dynamic>>(
@@ -132,6 +137,20 @@ class ApiService {
     } catch (e) {
       AppLogger.e('Error syncing mails', e);
       throw Exception('Error syncing: $e');
+    }
+  }
+
+  /// Simple ping to "wake up" the server from cold start
+  Future<void> warmUpServer() async {
+    try {
+      AppLogger.i('Waking up server...');
+      await _dio.get('/health', options: Options(
+        sendTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 60),
+      ));
+      AppLogger.i('Server is awake');
+    } catch (e) {
+      AppLogger.v('Server warm-up ping failed (might still be waking up)');
     }
   }
 
